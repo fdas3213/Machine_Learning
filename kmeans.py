@@ -43,9 +43,9 @@ def k_means(num_cluster, data):
 
 def draw(num_cluster, data):
 	clusters, mean = k_means(num_cluster, data)
-	plt.scatter(data[np.where(clusters == 0)[0], 0], data[np.where(clusters == 0)[0], 1], c = 'red')
-	plt.scatter(data[np.where(clusters == 1)[0], 0], data[np.where(clusters == 1)[0], 1], c = 'blue')
-	plt.scatter(data[np.where(clusters == 2)[0], 0], data[np.where(clusters == 2)[0], 1], c = 'green')
+	plt.scatter(data[clusters == 0, 0], data[clusters == 0, 1], c = 'red')
+	plt.scatter(data[clusters == 1, 0], data[clusters == 1, 1], c = 'blue')
+	plt.scatter(data[clusters == 2, 0], data[clusters == 2, 1], c = 'green')
 	plt.scatter(mean[:,0], mean[:,1], c = 'yellow')
 	plt.show()
 	
