@@ -10,8 +10,8 @@ def load_data():
 	shuffle_indices = np.random.permutation(len(x))
 	return x[shuffle_indices], y[shuffle_indices]
 
-def l2_norm(x,y):
-	return norm(x-y)
+def l2_dist(x,y):
+	return norm(x-y, axis = 1)
 
 def initCenter(data, num_cluster):
 	numSamples, dim = data.shape
@@ -29,7 +29,7 @@ def k_means(num_cluster, data):
 		#for each sample
 		for i in range(numSamples):
 			#find the closest centroid
-			dist = norm(data[i] - init_means, axis = 1)
+			dist = l2_dist(data[i], init_means)
 			cluster_idx = np.argmin(dist)
 			if clusters[i] != cluster_idx:
 				nonstop = True
