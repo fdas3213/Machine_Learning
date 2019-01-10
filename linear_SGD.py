@@ -13,10 +13,14 @@ class LinearSGD:
 	def __predict(self, x, a,b):
 		return x*a + b
 
-	def fit(self, X, y):
-		#weight initialization
-		self.w_1 = 1
-		self.w_2 = 1
+	def __grad(self, x, y, a, b):
+		return np.array([-2*x*(y-a*x-b), -2*(y-a*x-b)])
+
+	def fit(self, X, y, gamma = 0.9):
+		#add momentum to SGD
+		#weight and velocity initialization
+		self.weights = np.random.rand(2)
+		self.v_t = np.zeros(2)
 
 		#record loss
 		self.loss = list()
@@ -26,11 +30,11 @@ class LinearSGD:
 			p = np.random.permutation(dim)
 			X, y = X[p], y[p]
 			for i in range(len(x)):
-				pred = self.__predict(X[i], self.w_1, self.w_2)
+				pred = self.__predict(X[i], *self.weights)
 				l = self.__square_loss(y[i], pred)
 				iter_loss += l
-				self.w_1 -= self.lr* (-2*X[i]*(y[i] - self.w_1 *X[i]-self.w_2))
-				self.w_2 -= self.lr* (-2*(y[i] - self.w_1*X[i]-self.w_2))
+				self.v_t = gamma * self.v_t + (1 - gamma) * self.__grad(X[i], y[i], *self.weights)
+				self.weights -= self.lr * self.v_t
 			self.loss.append(iter_loss/dim)
 
 	def plot_loss(self):
