@@ -1,4 +1,3 @@
-# ml_algorithms
-Implementations of some machine learning algorithms. 
+# machine learning and deep learning algorithm implementations
 
-Hands on practice for writing machine learning models and their tests.
+Implementations of some machine learning and deep learning methods. Hands-on practice for ML/DL coding and testing
