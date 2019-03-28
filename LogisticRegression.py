@@ -60,7 +60,8 @@ if __name__ == "__main__":
 	data = load_breast_cancer()
 	x, y = data['data'], data['target']
 	x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.25)
-	clf = LogisticRegression(0.01, epsilon = 1e-8)
+	clf = LogisticRegression(0.01, epsilon = 1e-6)
 	clf.fit(x_train, y_train)
-	preds = clf.predict(x_test)
-	print("self implemented LogisticRegression accuracy_score: {:.4f}".format(accuracy_score(preds, y_test)))
+	for th in [0.4, 0.5, 0.6]:
+		preds = clf.predict(x_test, th)
+		print("self implemented LogisticRegression threshold: {}, accuracy_score: {:.4f}".format(th, accuracy_score(preds, y_test)))
