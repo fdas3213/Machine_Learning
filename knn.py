@@ -1,42 +1,43 @@
 import numpy as np 
-import scipy.io as sio
+from sklearn.datasets import load_iris
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 import sys
 
-def get_data(filepath):
-	dat = sio.loadmat(filepath)
-	return dat['train'], dat['test']
+class KNN:
+	def __init__(self, k = 3):
+		self.k = k
 
-def l2_norm(l1, l2):
-	return np.linalg.norm(l2 - l1)
+	def l2_norm(self, l1, l2):
+		return np.linalg.norm(l2-l1)
 
-def majority_vote(dic):
-	return max(dic.items(), key = lambda x: x[1])[0]
+	def majority_vote(self, dic):
+		return max(dic.items(), key = lambda x: x[1])[0]
 
-def calculate_dist(train, test, k):
-	dist = [(i,l2_norm(test[1:], train[i,1:])) for i in range(len(train))]
-	dist_ordered = sorted(dist, key = lambda x: x[1])[:k]
-	labels = {v: 0 for v in np.arange(10, dtype = np.float32)}
-	for idx, d in dist_ordered:
-		labels[train[idx,0]] = labels.get(train[idx,0],0) + 1
-	pred = majority_vote(labels)
-	return 1 if pred == test[0] else 0
+	def fit(self, x, y):
+		self.train_x = x
+		self.train_y = y
 
-def calculate_accuracy(train, test, k):
-	all_predictions = 0
-	indices = np.random.choice(test.shape[0], 100, replace = False)
-	for i in indices:
-		all_predictions += calculate_dist(train, test[i],k)
-	return all_predictions / 100
-
-def find_best_k(train, test, k_list):
-	pred = dict()
-	for k in k_list:
-		accuracy = calculate_accuracy(train, test, k)
-		pred[k] = accuracy
-	return pred
+	def predict(self, x_test):
+		data_size = len(self.train_x)
+		preds = list()
+		for test_idx in range(len(x_test)):
+			dist = [(i, self.l2_norm(x_test[test_idx], self.train_x[i])) for i in range(data_size)]
+			dist_ordered = sorted(dist, key = lambda x: x[1])[:self.k]
+			labels = dict()
+			for idx, d in dist_ordered:
+				labels[self.train_y[idx]] = labels.get(self.train_y[idx], 0) + 1
+			preds.append(self.majority_vote(labels))
+		return preds
 
 if __name__ == "__main__":
-	k_list = [1,5,9,13]
-	train, test = get_data(sys.argv[1])
-	result = find_best_k(train, test, k_list)
-	print(result)
+	#use iris dataset to test
+	x, y = load_iris()['data'], load_iris()['target']
+	x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.2)
+	#find best k from this list [3,5,7,11]
+	for K in [3,5,7,11]:
+		clf = KNN(K)
+		clf.fit(x_train, y_train)
+		preds = clf.predict(x_test)
+		print("k = {}, accuracy = {:.3f}".format(K, accuracy_score(preds, y_test)))
+
