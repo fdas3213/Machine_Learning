@@ -44,15 +44,15 @@ class LogisticRegression:
 			pre_loss = iter_loss
 			self.total_loss.append(iter_loss)
 
-	def predict(self, x_test):
+	def predict(self, x_test, cutoff = 0.5):
 		if self.bias:
 			x = x_test.copy()
 			x_test = np.zeros((len(x_test), self.dimension + 1))
 			x_test[:, :-1] = x
 		self.probs = x_test.dot(self.w)
 		self.pred = self.probs.copy()
-		self.pred[self.pred >= 0.5] = 1
-		self.pred[self.pred < 0.5] = 0
+		self.pred[self.pred >= cutoff] = 1
+		self.pred[self.pred < cutoff] = 0
 		return self.pred
 
 if __name__ == "__main__":
