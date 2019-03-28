@@ -1,47 +1,53 @@
 import numpy as np
 from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 
-def load_data():
-	#add a 0 column to X 
-	data = datasets.load_diabetes()
-	x, y = data['data'],data['target']
-	return x[:-20],x[-20:], y[:-20],y[-20:]
+class LinearRegre:
+	def __init__(self, num_epochs, lr, bias = True):
+		self.num_epochs = num_epochs
+		self.learning_rate = lr
+		self.bias = bias
 
-def loss(x, y, w):
-	pred = x.dot(w)
-	l = pred - y
-	return np.sum(l**2) / (2*x.shape[0])
+	def get_loss(self, x, y,w,b):
+		return np.square(x.dot(w)+b-y)
 
-def cal_grad(w, x, y):
-	l = np.dot(x, w) - y
-	assert l.shape == y.shape
-	grad = np.dot(x.T, l) / x.shape[0]
-	return grad
+	def cal_grad(self, w,x,y, b):
+		return 2*x*(np.dot(x,w)+b - y), 2*(np.dot(x,w)+b-y)
 
-def gradient_descent(iteration, learning_rate, x, y):
-	#perform gradient descent for parameter w 
-	w = np.random.rand(x.shape[1])
-	total_loss = []
-	for i in range(iteration):
-		w_grad = cal_grad(w, x,y)
-		l = loss(x,y,w)
-		if i % 1000 == 0:
-			print("Iteration: {} has loss: {}".format(i, l))
-		w -= learning_rate * w_grad
-		total_loss.append(l)
+	def fit(self, x, y):
+		#perform SGD
+		self.w = np.random.uniform(-1,1, size = x.shape[1])
+		self.b = 0
+		self.total_loss = list()
+		data_size = x.shape[0]
+		for i in range(self.num_epochs):
+			iter_loss = 0
+			for idx in range(data_size):
+				w_grad, b_grad = self.cal_grad(self.w, x[idx], y[idx], self.b)
+				iter_loss += self.get_loss(x[idx], y[idx], self.w, self.b)
+				self.w -= self.learning_rate * w_grad
+				self.b -= self.learning_rate * b_grad
+			if i % 1000 == 0:
+				print("Iteration: {}, loss: {:.4f}".format(i, iter_loss/data_size))
+			self.total_loss.append(iter_loss/data_size)
 
-	return w,total_loss
-
-def fit(x, w):
-	return x.dot(w)
-
+	def predict(self, x_test):
+		return x_test.dot(self.w) + self.b
 
 if __name__ == "__main__":
-	x_train, x_test, y_train, y_test = load_data()
-	w, l = gradient_descent(10000, 0.1, x_train,y_train)
-	y_hat = fit(x_test, w)
-	plt.scatter(x_test[:,2], y_test, color = 'black')
-	plt.plot(x_test[:,2], y_hat,color = 'blue', linewidth = 3)
-	plt.show()
-
+	#test using diabetes dataset
+	data = datasets.load_diabetes()
+	x, y = data['data'], data['target']
+	x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.25)
+	clf = LinearRegre(10000, 0.01)
+	clf.fit(x_train, y_train)
+	preds = clf.predict(x_test)
+	print("self implemented mean squared error is: {:.4f}".format(mean_squared_error(preds, y_test)))
+	#compared with Sklearn implementation
+	lr = LinearRegression()
+	lr.fit(x_train, y_train)
+	sk_preds = lr.predict(x_test)
+	print("Sklearn LinearRegression mean squared error is: {:.4f}".format(mean_squared_error(sk_preds, y_test)))
