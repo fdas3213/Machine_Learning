@@ -1,76 +1,66 @@
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
-def read_feature(filepath):
-	with open(filepath) as f:
-		dat = [[float(val) for val in line.split()] for line in f]
+class LogisticRegression:
+	##implements Logistic Regression using SGD
+	def __init__(self, learning_rate, epsilon = 1e-2, bias = True):
+		self.lr = learning_rate
+		self.epsilon = epsilon
+		self.bias = bias
 
-	return np.column_stack((np.ones(len(dat)),np.array(dat)))
+	def __sigmoid(self, x, w):
+		return 1/(1+np.exp(-x.dot(w)))
 
-def read_label(filepath):
-	with open(filepath) as f:
-		dat = [float(line.rstrip()) for line in f ]
-	return np.array(dat)
+	def __CELoss(self, x, y, w):
+		pred = self.__sigmoid(x, w)
+		return -y*np.log(pred) - (1-y)*np.log(1-pred)
 
-def hessian(x,y,w):
-	W = np.zeros((len(x),len(x)))
-	for idx in range(len(x)):
-		h_x = 1 / (1+np.exp(-w.T.dot(x[idx])))
-		W[idx,idx] = h_x * (1-h_x)
-	H = x.T.dot(W).dot(x)
-	return np.linalg.inv(H)
+	def __gradient(self, x, y, w):
+		pred = self.__sigmoid(x, w)
+		return (pred - y)*x
 
-def gradient(x,y,w):
-	W = np.zeros(len(x))
-	for idx in range(len(x)):
-		h_x = 1 / (1+np.exp(-w.T.dot(x[idx])))
-		W[idx] = h_x - y[idx]
-	G = x.T.dot(W)
-	return G
+	def fit(self, x,y):
+		#perform SGD
+		data_size = len(x)
+		self.dimension = x.shape[1]
+		if self.bias:
+			x_train = x.copy()
+			x = np.zeros((data_size, self.dimension+1))
+			x[:, :-1] = x_train
+		self.w = np.random.uniform(-1, 1, size = self.dimension+1)
+		self.total_loss = list()
+		pre_loss = 1
+		delta_loss = np.Infinity
+		while delta_loss > self.epsilon:
+			iter_loss = 0
+			for idx in range(data_size):
+				w_grad = self.__gradient(x[idx], y[idx], self.w)
+				iter_loss += self.__CELoss(x[idx], y[idx], self.w)
+				self.w -= self.lr * w_grad
+			delta_loss = np.abs(iter_loss - pre_loss)/pre_loss
+			pre_loss = iter_loss
+			self.total_loss.append(iter_loss)
 
-def cross_entropy_loss(x,y,w):
-	total_loss = 0
-	for idx in range(len(x)):
-		h_x = 1 / (1+np.exp(-w.T.dot(x[idx])))
-		l = -y[idx]*np.log(h_x) - (1-y[idx])*np.log(1-h_x)
-		total_loss += l
-	return total_loss
-
-def newton_method(feature,label,epsilon):
-	w = np.zeros(3)
-	l = cross_entropy_loss(feature, label,w)
-	delta_loss = np.Infinity
-	i = 0
-	error = list()
-	while delta_loss > epsilon:
-		g = gradient(feature,label, w)
-		h_inv = hessian(feature, label, w)
-		delta = h_inv.dot(g)
-		w -= delta
-		l_new = cross_entropy_loss(feature, label,w)
-		delta_loss = np.abs(l_new - l)
-		error.append(l)
-		l = l_new
-		i += 1
-		
-	return i, w, error
-
-def plot(iteration, error, train = True):
-	plt.plot([i for i in range(iteration)], error)
-	plt.xlabel("Number of iteration")
-	plt.ylabel("Total loss")
-	if train:
-		plt.title("Training error vs. number of iteration")
-	else:
-		plt.title("Test error vs. number of iteration")
-	plt.show()
+	def predict(self, x_test):
+		if self.bias:
+			x = x_test.copy()
+			x_test = np.zeros((len(x_test), self.dimension + 1))
+			x_test[:, :-1] = x
+		self.probs = x_test.dot(self.w)
+		self.pred = self.probs.copy()
+		self.pred[self.pred >= 0.5] = 1
+		self.pred[self.pred < 0.5] = 0
+		return self.pred
 
 if __name__ == "__main__":
-	#first command line argument is training/test feature data, second command line argument is training/test label data
-	feature = read_feature(sys.argv[1])
-	label = read_label(sys.argv[2])
-	iteration, coeff, errors = newton_method(feature, label, 1e-8)
-	#print("iteration: {}, coeff, {}".format(iteration, coeff))
-	plot(iteration, errors, True)
-
+	#test using breast cancer dataset
+	data = load_breast_cancer()
+	x, y = data['data'], data['target']
+	x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.25)
+	clf = LogisticRegression(0.01, epsilon = 1e-8)
+	clf.fit(x_train, y_train)
+	preds = clf.predict(x_test)
+	print("self implemented LogisticRegression accuracy_score: {:.4f}".format(accuracy_score(preds, y_test)))
