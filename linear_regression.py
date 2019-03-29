@@ -3,7 +3,6 @@ from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
-import matplotlib.pyplot as plt
 
 class LinearRegre:
 	def __init__(self, num_epochs, lr, bias = True):
