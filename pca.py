@@ -7,6 +7,8 @@ class PrincipleComponentAnalysis:
         self.n_componenets = n_components
 
     def fit(self, X):
+        # center the data
+        X -= np.mean(X, axis=0)
         self.cov_mat = np.dot(X.T, X)
         lam, mu = np.linalg.eig(self.cov_mat)
         self.outX = np.zeros((X.shape[0], self.n_componenets))
