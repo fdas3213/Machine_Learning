@@ -10,9 +10,9 @@ class PrincipleComponentAnalysis:
         # center the data
         X -= np.mean(X, axis=0)
         self.cov_mat = np.dot(X.T, X)
-        lam, mu = np.linalg.eig(self.cov_mat)
+        U, Sigma, V_t = np.linalg.svd(self.cov_mat)
         self.outX = np.zeros((X.shape[0], self.n_componenets))
-        transformed_matrix = np.dot(X, mu.T)
+        transformed_matrix = np.dot(X, U)
         self.outX[:,:self.n_componenets] = transformed_matrix[:,:self.n_componenets]
         return self.outX
 
