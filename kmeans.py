@@ -44,6 +44,59 @@ class KMeans:
 		plt.legend(['cluster_0', 'cluster_1', 'cluster_2', 'center'])
 		plt.show()
 
+
+
+class KMeansV1:
+	# new version
+    def __init__(self, n_clusters, method='l2'):
+        self.n_clusters = n_clusters
+        self.X = None
+        if method not in ['l2','cosine']:
+            raise ValueError("Please use either L2-distance or Cosine distance")
+        self.method = method
+    
+    def _calc_l2(self, x):
+        return np.sqrt(np.sum(np.square(x)))
+        #return np.sqrt(np.sum(np.square(x), axis=1)) for matrix computation
+    
+    def _calc_dist(self, a, b):
+        if self.method=='l2':
+            return self._calc_l2(a-b)
+        elif self.method=='cosine':
+            return np.dot(a,b)/(self._calc_l2(a)*self._calc_l2(b))
+    
+    def fit(self, x):
+        self.X = x
+        N, d = x.shape
+        #initialize cluster labels for each data point
+        self.cluster_labels = np.zeros(N)
+        #initialize cluster centers
+        self.cluster_centers = [self.X[random.randint(0,N-1)] for _ in range(self.n_clusters)]
+        #iteratively update cluster label for each data point
+        stop = False
+        while not stop:
+            stop = True
+            for index, x_tr in enumerate(x):
+                #assign x_tr to the cluser which has the closest distance to the cluster center
+                cur_cluster = np.argmin([self._calc_dist(x_tr, centroid) for centroid in self.cluster_centers])
+                prev_cluster = self.cluster_labels[index]
+                # does not converge
+                if cur_cluster != prev_cluster:
+                    self.cluster_labels[index] = cur_cluster
+                    stop = False
+            
+            #update cluster centroids
+            for i in range(self.n_clusters):
+                self.cluster_centers[i] = np.mean(self.X[self.cluster_labels==i], axis=0)
+                
+    def predict(self, x_test):
+        preds = []
+        for x_te in x_test:
+            cluster_label = np.argmin([self._calc_dist(x_te, centroid) for centroid in self.cluster_centers])
+            preds.append(cluster_label)
+        
+        return preds 
+
 if __name__ == "__main__":
 	#load data and shuffle indices
 	x = load_iris()['data']
